@@ -1,15 +1,23 @@
-import { Mail, Phone, Linkedin, Github, Upload, X, FileText } from "lucide-react";
+import { Mail, Phone, Linkedin, Github, Upload, X, FileText, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 
 export const ContactSection = () => {
   const [contactImage, setContactImage] = useState<string>("");
   const [cvDocument, setCvDocument] = useState<string>("");
+  const [linkedinUrl, setLinkedinUrl] = useState<string>("");
+  const [githubUrl, setGithubUrl] = useState<string>("");
+  const [isEditingLinks, setIsEditingLinks] = useState(false);
 
   useEffect(() => {
     loadContactFiles();
+    const savedLinkedin = localStorage.getItem("linkedinUrl") || "https://www.linkedin.com/in/yonela-sibene";
+    const savedGithub = localStorage.getItem("githubUrl") || "https://github.com/yonelasibene";
+    setLinkedinUrl(savedLinkedin);
+    setGithubUrl(savedGithub);
   }, []);
 
   const loadContactFiles = async () => {
@@ -66,6 +74,12 @@ export const ContactSection = () => {
     }
   };
 
+  const handleSaveLinks = () => {
+    localStorage.setItem("linkedinUrl", linkedinUrl);
+    localStorage.setItem("githubUrl", githubUrl);
+    setIsEditingLinks(false);
+  };
+
   const contactInfo = [
     {
       icon: Phone,
@@ -83,13 +97,13 @@ export const ContactSection = () => {
       icon: Linkedin,
       label: "LinkedIn",
       value: "View Profile",
-      link: "https://www.linkedin.com/in/yonela-sibene",
+      link: linkedinUrl,
     },
     {
       icon: Github,
       label: "GitHub",
       value: "View Profile",
-      link: "https://github.com/yonelasibene",
+      link: githubUrl,
     },
   ];
 
@@ -105,12 +119,50 @@ export const ContactSection = () => {
     <section id="contact" className="min-h-screen flex items-center py-20 bg-gradient-to-b from-background to-muted">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-5xl font-bold text-center text-foreground mb-4">
-            Let&apos;s Work Together
-          </h2>
-          <p className="text-center text-muted-foreground mb-12 text-lg">
-            I&apos;m always open to discussing new opportunities and collaborations
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-5xl font-bold text-foreground mb-2">
+                Let&apos;s Work Together
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                I&apos;m always open to discussing new opportunities and collaborations
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditingLinks(!isEditingLinks)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              {isEditingLinks ? "Cancel" : "Edit Links"}
+            </Button>
+          </div>
+
+          {isEditingLinks && (
+            <Card className="p-6 mb-8 border-accent">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">LinkedIn URL</label>
+                  <Input
+                    value={linkedinUrl}
+                    onChange={(e) => setLinkedinUrl(e.target.value)}
+                    placeholder="https://www.linkedin.com/in/your-profile"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">GitHub URL</label>
+                  <Input
+                    value={githubUrl}
+                    onChange={(e) => setGithubUrl(e.target.value)}
+                    placeholder="https://github.com/your-username"
+                  />
+                </div>
+                <Button onClick={handleSaveLinks} className="w-full">
+                  Save Links
+                </Button>
+              </div>
+            </Card>
+          )}
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Contact Image */}
@@ -249,7 +301,7 @@ export const ContactSection = () => {
               ))}
               <Button
                 variant="outline"
-                onClick={() => window.open("https://www.linkedin.com/in/yonela-sibene", "_blank")}
+                onClick={() => window.open(linkedinUrl, "_blank")}
                 className="justify-start"
               >
                 <Linkedin className="h-4 w-4 mr-2" />
@@ -257,7 +309,7 @@ export const ContactSection = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.open("https://github.com/yonelasibene", "_blank")}
+                onClick={() => window.open(githubUrl, "_blank")}
                 className="justify-start"
               >
                 <Github className="h-4 w-4 mr-2" />

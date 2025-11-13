@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { ArrowNavigation } from "@/components/ArrowNavigation";
+import { PortfolioChatbot } from "@/components/PortfolioChatbot";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { AboutSection } from "@/components/sections/AboutSection";
 import { EducationSection } from "@/components/sections/EducationSection";
@@ -58,6 +59,7 @@ const Index = () => {
     <div className="relative">
       <Navigation activeSection={activeSection} onNavigate={navigateToSection} />
       <ArrowNavigation onNavigate={handleArrowNavigation} />
+      <PortfolioChatbot />
 
       <HeroSection />
       <AboutSection />

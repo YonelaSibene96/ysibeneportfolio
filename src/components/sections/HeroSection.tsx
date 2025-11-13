@@ -78,11 +78,11 @@ export const HeroSection = () => {
           </p>
 
           {/* Professional Images Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+          <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={index}
-                className="relative aspect-square rounded-lg overflow-hidden border-2 border-border bg-muted hover:border-accent transition-all group"
+                className="relative aspect-[4/5] rounded-lg overflow-hidden border-2 border-border bg-muted hover:border-accent transition-all group"
               >
                 {profileImages[index] ? (
                   <>
