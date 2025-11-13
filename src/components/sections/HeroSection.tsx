@@ -1,30 +1,59 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import heroBg from "@/assets/hero-bg.jpg";
 
 export const HeroSection = () => {
   const [profileImages, setProfileImages] = useState<string[]>([]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newImages = [...profileImages];
-        newImages[index] = reader.result as string;
-        setProfileImages(newImages);
-        localStorage.setItem("profileImages", JSON.stringify(newImages));
-      };
-      reader.readAsDataURL(file);
+  useEffect(() => {
+    loadImages();
+  }, []);
+
+  const loadImages = async () => {
+    const { data } = await supabase.storage.from('profile-images').list('', {
+      limit: 4,
+      sortBy: { column: 'name', order: 'asc' }
+    });
+
+    if (data) {
+      const urls = await Promise.all(
+        data.slice(0, 4).map(async (file) => {
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-images')
+            .getPublicUrl(file.name);
+          return publicUrl;
+        })
+      );
+      setProfileImages(urls);
     }
   };
 
-  const removeImage = (index: number) => {
-    const newImages = [...profileImages];
-    newImages[index] = "";
-    setProfileImages(newImages);
-    localStorage.setItem("profileImages", JSON.stringify(newImages));
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const fileName = `profile-${index}-${Date.now()}.${file.name.split('.').pop()}`;
+      
+      const { error } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (!error) {
+        loadImages();
+      }
+    }
+  };
+
+  const removeImage = async (index: number) => {
+    const fileName = profileImages[index]?.split('/').pop();
+    if (fileName) {
+      await supabase.storage
+        .from('profile-images')
+        .remove([fileName]);
+      
+      loadImages();
+    }
   };
 
   return (

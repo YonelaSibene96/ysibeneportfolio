@@ -2,6 +2,7 @@ import { GraduationCap, Upload, X, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Education {
   institution: string;
@@ -37,26 +38,59 @@ export const EducationSection = () => {
   const [education, setEducation] = useState<Education[]>(defaultEducation);
 
   useEffect(() => {
-    const saved = localStorage.getItem("education");
-    if (saved) setEducation(JSON.parse(saved));
+    loadEducation();
   }, []);
 
-  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newEducation = [...education];
-        newEducation[index].document = reader.result as string;
-        setEducation(newEducation);
-        localStorage.setItem("education", JSON.stringify(newEducation));
-      };
-      reader.readAsDataURL(file);
+  const loadEducation = async () => {
+    const saved = localStorage.getItem("education");
+    if (saved) {
+      const eduData = JSON.parse(saved);
+      
+      const updatedEdu = await Promise.all(
+        eduData.map(async (edu: Education) => {
+          if (edu.document && edu.document.startsWith('documents/')) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('documents')
+              .getPublicUrl(edu.document);
+            return { ...edu, document: publicUrl };
+          }
+          return edu;
+        })
+      );
+      
+      setEducation(updatedEdu);
     }
   };
 
-  const removeDocument = (index: number) => {
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const fileName = `documents/edu-${index}-${Date.now()}.${file.name.split('.').pop()}`;
+      
+      const { error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file, { upsert: true });
+
+      if (!error) {
+        const newEducation = [...education];
+        newEducation[index].document = fileName;
+        setEducation(newEducation);
+        localStorage.setItem("education", JSON.stringify(newEducation));
+        loadEducation();
+      }
+    }
+  };
+
+  const removeDocument = async (index: number) => {
     const newEducation = [...education];
+    const docPath = newEducation[index].document;
+    
+    if (docPath && docPath.startsWith('documents/')) {
+      await supabase.storage
+        .from('documents')
+        .remove([docPath]);
+    }
+    
     delete newEducation[index].document;
     setEducation(newEducation);
     localStorage.setItem("education", JSON.stringify(newEducation));

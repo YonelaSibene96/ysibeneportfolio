@@ -2,41 +2,67 @@ import { Mail, Phone, Linkedin, Github, Upload, X, FileText } from "lucide-react
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ContactSection = () => {
   const [contactImage, setContactImage] = useState<string>("");
   const [cvDocument, setCvDocument] = useState<string>("");
 
   useEffect(() => {
-    const savedImage = localStorage.getItem("contactImage");
-    const savedCV = localStorage.getItem("cvDocument");
-    if (savedImage) setContactImage(savedImage);
-    if (savedCV) setCvDocument(savedCV);
+    loadContactFiles();
   }, []);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setContactImage(result);
-        localStorage.setItem("contactImage", result);
-      };
-      reader.readAsDataURL(file);
+  const loadContactFiles = async () => {
+    const { data: images } = await supabase.storage
+      .from('contact-images')
+      .list('', { limit: 1 });
+
+    if (images && images.length > 0) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('contact-images')
+        .getPublicUrl(images[0].name);
+      setContactImage(publicUrl);
+    }
+
+    const { data: docs } = await supabase.storage
+      .from('documents')
+      .list('cv', { limit: 1 });
+
+    if (docs && docs.length > 0) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(`cv/${docs[0].name}`);
+      setCvDocument(publicUrl);
     }
   };
 
-  const handleCVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setCvDocument(result);
-        localStorage.setItem("cvDocument", result);
-      };
-      reader.readAsDataURL(file);
+      const fileName = `contact-${Date.now()}.${file.name.split('.').pop()}`;
+      
+      const { error } = await supabase.storage
+        .from('contact-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (!error) {
+        loadContactFiles();
+      }
+    }
+  };
+
+  const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const fileName = `cv/cv-${Date.now()}.${file.name.split('.').pop()}`;
+      
+      const { error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file, { upsert: true });
+
+      if (!error) {
+        loadContactFiles();
+      }
     }
   };
 
@@ -98,9 +124,14 @@ export const ContactSection = () => {
                       className="w-full h-full object-cover"
                     />
                     <button
-                      onClick={() => {
+                      onClick={async () => {
+                        const fileName = contactImage.split('/').pop();
+                        if (fileName) {
+                          await supabase.storage
+                            .from('contact-images')
+                            .remove([fileName]);
+                        }
                         setContactImage("");
-                        localStorage.removeItem("contactImage");
                       }}
                       className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
@@ -165,9 +196,14 @@ export const ContactSection = () => {
                       View CV
                     </Button>
                     <Button
-                      onClick={() => {
+                      onClick={async () => {
+                        const fileName = cvDocument.split('/').pop();
+                        if (fileName) {
+                          await supabase.storage
+                            .from('documents')
+                            .remove([`cv/${fileName}`]);
+                        }
                         setCvDocument("");
-                        localStorage.removeItem("cvDocument");
                       }}
                       variant="outline"
                       size="icon"

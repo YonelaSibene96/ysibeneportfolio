@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Certification {
   name: string;
@@ -23,9 +24,29 @@ export const CertificationsSection = () => {
   const [newCert, setNewCert] = useState({ name: "", issuer: "", date: "" });
 
   useEffect(() => {
-    const saved = localStorage.getItem("certifications");
-    if (saved) setCertifications(JSON.parse(saved));
+    loadCertifications();
   }, []);
+
+  const loadCertifications = async () => {
+    const saved = localStorage.getItem("certifications");
+    if (saved) {
+      const certData = JSON.parse(saved);
+      
+      const updatedCerts = await Promise.all(
+        certData.map(async (cert: Certification) => {
+          if (cert.document && cert.document.startsWith('documents/')) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('documents')
+              .getPublicUrl(cert.document);
+            return { ...cert, document: publicUrl };
+          }
+          return cert;
+        })
+      );
+      
+      setCertifications(updatedCerts);
+    }
+  };
 
   const handleAdd = () => {
     if (newCert.name && newCert.issuer) {
@@ -37,22 +58,35 @@ export const CertificationsSection = () => {
     }
   };
 
-  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      const fileName = `documents/cert-${index}-${Date.now()}.${file.name.split('.').pop()}`;
+      
+      const { error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file, { upsert: true });
+
+      if (!error) {
         const updated = [...certifications];
-        updated[index].document = reader.result as string;
+        updated[index].document = fileName;
         setCertifications(updated);
         localStorage.setItem("certifications", JSON.stringify(updated));
-      };
-      reader.readAsDataURL(file);
+        loadCertifications();
+      }
     }
   };
 
-  const removeDocument = (index: number) => {
+  const removeDocument = async (index: number) => {
     const updated = [...certifications];
+    const docPath = updated[index].document;
+    
+    if (docPath && docPath.startsWith('documents/')) {
+      await supabase.storage
+        .from('documents')
+        .remove([docPath]);
+    }
+    
     delete updated[index].document;
     setCertifications(updated);
     localStorage.setItem("certifications", JSON.stringify(updated));
