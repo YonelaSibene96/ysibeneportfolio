@@ -77,12 +77,12 @@ export const HeroSection = () => {
             Data Driven Business Analyst | ECBA Candidate | AI Solutions
           </p>
 
-          {/* Professional Images Grid */}
-          <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Professional Images Row */}
+          <div className="flex flex-row gap-4 justify-center items-center max-w-3xl mx-auto">
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={index}
-                className="relative aspect-[4/5] rounded-lg overflow-hidden border-2 border-border bg-muted hover:border-accent transition-all group"
+                className="relative w-40 h-48 rounded-lg overflow-hidden border-2 border-border bg-muted hover:border-accent transition-all group"
               >
                 {profileImages[index] ? (
                   <>
