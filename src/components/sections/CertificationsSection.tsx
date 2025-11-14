@@ -19,6 +19,96 @@ export const CertificationsSection = () => {
       issuer: "International Institute of Business Analysis",
       date: "In Progress",
     },
+    {
+      name: "AI & Machine Learning For Everyone",
+      issuer: "CAPACITI",
+      date: "2024",
+    },
+    {
+      name: "AI FOR EVERYONE",
+      issuer: "CAPACITI",
+      date: "2024",
+    },
+    {
+      name: "Introduction to AI",
+      issuer: "Google (Coursera)",
+      date: "2024",
+    },
+    {
+      name: "AI For Everyone",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Introduction to Responsible AI",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Active Listening Enhancing Communication Skills",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Developing Interpersonal Skills",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Emotional Intelligence",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Financial Planning For Young Adults",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Finding Your Professional Voice",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Grit and Growth Mindset",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Introduction to Personal Branding",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Leading With Impact",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Preparation For Job Interviews",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Solving Problems With Creative & Critical Thinking",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Verbal Communications and Presentation Skills",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Work Smarter, Not Harder",
+      issuer: "Coursera",
+      date: "2024",
+    },
+    {
+      name: "Write Professional Emails in English",
+      issuer: "Coursera",
+      date: "2024",
+    },
   ]);
   const [isAdding, setIsAdding] = useState(false);
   const [newCert, setNewCert] = useState({ name: "", issuer: "", date: "" });
