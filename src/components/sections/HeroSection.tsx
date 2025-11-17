@@ -13,13 +13,16 @@ export const HeroSection = () => {
 
   const loadImages = async () => {
     const { data } = await supabase.storage.from('profile-images').list('', {
-      limit: 4,
+      limit: 10,
       sortBy: { column: 'name', order: 'asc' }
     });
 
     if (data) {
+      // Filter out folders and only get actual image files
+      const imageFiles = data.filter(file => file.id !== null && file.metadata);
+      
       const urls = await Promise.all(
-        data.slice(0, 4).map(async (file) => {
+        imageFiles.slice(0, 3).map(async (file) => {
           const { data: { publicUrl } } = supabase.storage
             .from('profile-images')
             .getPublicUrl(file.name);
