@@ -242,10 +242,12 @@ export const ContactSection = () => {
                 {cvDocument ? (
                   <>
                     <Button
-                      onClick={() => window.open(cvDocument, "_blank")}
+                      asChild
                       variant="default"
                     >
-                      View CV
+                      <a href={cvDocument} target="_blank" rel="noopener noreferrer">
+                        View CV
+                      </a>
                     </Button>
                     <Button
                       onClick={async () => {
@@ -301,19 +303,23 @@ export const ContactSection = () => {
               ))}
               <Button
                 variant="outline"
-                onClick={() => window.open(linkedinUrl, "_blank")}
+                asChild
                 className="justify-start"
               >
-                <Linkedin className="h-4 w-4 mr-2" />
-                LinkedIn
+                <a href={linkedinUrl} target="_blank" rel="noopener noreferrer">
+                  <Linkedin className="h-4 w-4 mr-2" />
+                  LinkedIn
+                </a>
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.open(githubUrl, "_blank")}
+                asChild
                 className="justify-start"
               >
-                <Github className="h-4 w-4 mr-2" />
-                GitHub
+                <a href={githubUrl} target="_blank" rel="noopener noreferrer">
+                  <Github className="h-4 w-4 mr-2" />
+                  GitHub
+                </a>
               </Button>
             </div>
           </div>

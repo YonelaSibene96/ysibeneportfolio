@@ -230,9 +230,11 @@ export const CertificationsSection = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => window.open(cert.document, "_blank")}
+                          asChild
                         >
-                          <FileText className="h-4 w-4" />
+                          <a href={cert.document} target="_blank" rel="noopener noreferrer">
+                            <FileText className="h-4 w-4" />
+                          </a>
                         </Button>
                         <Button
                           variant="outline"

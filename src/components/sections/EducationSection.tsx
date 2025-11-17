@@ -122,9 +122,11 @@ export const EducationSection = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => window.open(edu.document, "_blank")}
+                          asChild
                         >
-                          <FileText className="h-4 w-4" />
+                          <a href={edu.document} target="_blank" rel="noopener noreferrer">
+                            <FileText className="h-4 w-4" />
+                          </a>
                         </Button>
                         <Button
                           variant="outline"
