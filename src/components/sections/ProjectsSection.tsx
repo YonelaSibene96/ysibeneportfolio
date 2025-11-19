@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Project {
   name: string;
@@ -21,26 +23,85 @@ export const ProjectsSection = () => {
     technologies: "",
     link: "",
   });
+  const { toast } = useToast();
 
   useEffect(() => {
-    const saved = localStorage.getItem("projects");
-    if (saved) setProjects(JSON.parse(saved));
+    loadProjects();
   }, []);
 
-  const handleAdd = () => {
-    if (newProject.name && newProject.description) {
-      const updated = [...projects, newProject];
-      setProjects(updated);
-      localStorage.setItem("projects", JSON.stringify(updated));
-      setNewProject({ name: "", description: "", technologies: "", link: "" });
-      setIsAdding(false);
+  const loadProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("portfolio_content")
+        .select("content_value")
+        .eq("content_key", "projects")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setProjects(JSON.parse(data.content_value));
+      }
+    } catch (error) {
+      console.error("Error loading projects:", error);
     }
   };
 
-  const handleRemove = (index: number) => {
+  const handleAdd = async () => {
+    if (newProject.name && newProject.description) {
+      const updated = [...projects, newProject];
+      try {
+        const { error } = await supabase
+          .from("portfolio_content")
+          .upsert({
+            content_key: "projects",
+            content_value: JSON.stringify(updated),
+          });
+
+        if (error) throw error;
+
+        setProjects(updated);
+        setNewProject({ name: "", description: "", technologies: "", link: "" });
+        setIsAdding(false);
+        toast({
+          title: "Project added",
+          description: "Your project has been saved successfully.",
+        });
+      } catch (error) {
+        console.error("Error saving project:", error);
+        toast({
+          title: "Error",
+          description: "Failed to save project. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleRemove = async (index: number) => {
     const updated = projects.filter((_, i) => i !== index);
-    setProjects(updated);
-    localStorage.setItem("projects", JSON.stringify(updated));
+    try {
+      const { error } = await supabase
+        .from("portfolio_content")
+        .upsert({
+          content_key: "projects",
+          content_value: JSON.stringify(updated),
+        });
+
+      if (error) throw error;
+
+      setProjects(updated);
+      toast({
+        title: "Project removed",
+        description: "Your project has been deleted successfully.",
+      });
+    } catch (error) {
+      console.error("Error removing project:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove project. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
