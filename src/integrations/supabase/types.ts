@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      certifications: {
+        Row: {
+          created_at: string
+          date: string
+          document_url: string | null
+          id: string
+          issuer: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          document_url?: string | null
+          id?: string
+          issuer: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          document_url?: string | null
+          id?: string
+          issuer?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portfolio_content: {
         Row: {
           content_key: string
