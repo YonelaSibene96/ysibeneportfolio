@@ -50,11 +50,14 @@ export const ProjectsSection = () => {
     if (newProject.name && newProject.description) {
       const updated = [...projects, newProject];
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
         const { error } = await supabase
           .from("portfolio_content")
           .upsert({
             content_key: "projects",
             content_value: JSON.stringify(updated),
+            owner_id: user?.id,
           });
 
         if (error) throw error;
@@ -80,11 +83,14 @@ export const ProjectsSection = () => {
   const handleRemove = async (index: number) => {
     const updated = projects.filter((_, i) => i !== index);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase
         .from("portfolio_content")
         .upsert({
           content_key: "projects",
           content_value: JSON.stringify(updated),
+          owner_id: user?.id,
         });
 
       if (error) throw error;
