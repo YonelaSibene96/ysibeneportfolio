@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
 import { ArrowNavigation } from "@/components/ArrowNavigation";
 import { PortfolioChatbot } from "@/components/PortfolioChatbot";
@@ -10,11 +12,38 @@ import { SkillsSection } from "@/components/sections/SkillsSection";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { ProjectsSection } from "@/components/sections/ProjectsSection";
 import { ContactSection } from "@/components/sections/ContactSection";
+import Copyright from "@/components/Copyright";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { User, Session } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
 
 const sections = ["home", "about", "education", "certifications", "skills", "experience", "projects", "contact"];
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("home");
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,11 +84,53 @@ const Index = () => {
     }
   };
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Logged out",
+        description: "You've been successfully logged out.",
+      });
+      navigate("/auth");
+    }
+  };
+
   return (
     <div className="relative">
       <Navigation activeSection={activeSection} onNavigate={navigateToSection} />
       <ArrowNavigation onNavigate={handleArrowNavigation} />
       <PortfolioChatbot />
+      
+      {user && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+          <span className="text-sm text-gray-600">{user.email}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="rounded-full"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {!user && (
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            onClick={() => navigate("/auth")}
+            className="rounded-full shadow-lg"
+          >
+            Admin Login
+          </Button>
+        </div>
+      )}
 
       <HeroSection />
       <AboutSection />
@@ -69,6 +140,7 @@ const Index = () => {
       <ExperienceSection />
       <ProjectsSection />
       <ContactSection />
+      <Copyright />
     </div>
   );
 };
