@@ -316,12 +316,26 @@ export const ContactSection = () => {
                 {cvDocument ? (
                   <>
                     <Button
-                      asChild
                       variant="default"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(cvDocument);
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'CV.pdf';
+                          document.body.appendChild(a);
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                          document.body.removeChild(a);
+                        } catch (error) {
+                          // Fallback: open in new tab
+                          window.open(cvDocument, '_blank');
+                        }
+                      }}
                     >
-                      <a href={cvDocument} target="_blank" rel="noopener noreferrer">
-                        View CV
-                      </a>
+                      View CV
                     </Button>
                     <Button
                       onClick={async () => {
