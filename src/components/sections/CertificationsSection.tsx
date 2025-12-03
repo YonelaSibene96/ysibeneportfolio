@@ -227,7 +227,7 @@ export const CertificationsSection = () => {
     if (!file) return;
 
     try {
-      const fileName = `documents/cert-${certId}-${Date.now()}.${file.name.split('.').pop()}`;
+      const fileName = `certs/cert-${certId}-${Date.now()}.${file.name.split('.').pop()}`;
       
       const { error: uploadError } = await supabase.storage
         .from('documents')
@@ -258,18 +258,15 @@ export const CertificationsSection = () => {
     if (!certId) return;
 
     try {
-      // Extract the file path from the full URL if needed
-      let filePath = documentUrl;
-      if (documentUrl && documentUrl.includes('documents/')) {
-        const matches = documentUrl.match(/documents\/[^?]+/);
-        filePath = matches ? matches[0] : null;
-      }
-
-      // Remove from storage if there's a file path
-      if (filePath) {
-        await supabase.storage
-          .from('documents')
-          .remove([filePath]);
+      // Extract the file path from the full URL
+      if (documentUrl) {
+        const urlParts = documentUrl.split('/object/public/documents/');
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1].split('?')[0];
+          await supabase.storage
+            .from('documents')
+            .remove([filePath]);
+        }
       }
 
       // Update database

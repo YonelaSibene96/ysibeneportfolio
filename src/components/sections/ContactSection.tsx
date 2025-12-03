@@ -4,21 +4,44 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const ContactSection = () => {
   const [contactImage, setContactImage] = useState<string>("");
   const [cvDocument, setCvDocument] = useState<string>("");
-  const [linkedinUrl, setLinkedinUrl] = useState<string>("");
-  const [githubUrl, setGithubUrl] = useState<string>("");
+  const [linkedinUrl, setLinkedinUrl] = useState<string>("https://www.linkedin.com/in/yonela-sibene");
+  const [githubUrl, setGithubUrl] = useState<string>("https://github.com/yonelasibene");
   const [isEditingLinks, setIsEditingLinks] = useState(false);
 
   useEffect(() => {
     loadContactFiles();
-    const savedLinkedin = localStorage.getItem("linkedinUrl") || "https://www.linkedin.com/in/yonela-sibene";
-    const savedGithub = localStorage.getItem("githubUrl") || "https://github.com/yonelasibene";
-    setLinkedinUrl(savedLinkedin);
-    setGithubUrl(savedGithub);
+    loadSocialLinks();
   }, []);
+
+  const loadSocialLinks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('portfolio_content')
+        .select('content_key, content_value')
+        .in('content_key', ['linkedin_url', 'github_url']);
+
+      if (error) throw error;
+
+      if (data) {
+        data.forEach(item => {
+          if (item.content_key === 'linkedin_url') setLinkedinUrl(item.content_value);
+          if (item.content_key === 'github_url') setGithubUrl(item.content_value);
+        });
+      }
+    } catch (error) {
+      console.error('Error loading social links:', error);
+      // Fallback to localStorage
+      const savedLinkedin = localStorage.getItem("linkedinUrl");
+      const savedGithub = localStorage.getItem("githubUrl");
+      if (savedLinkedin) setLinkedinUrl(savedLinkedin);
+      if (savedGithub) setGithubUrl(savedGithub);
+    }
+  };
 
   const loadContactFiles = async () => {
     const { data: images } = await supabase.storage
@@ -74,9 +97,60 @@ export const ContactSection = () => {
     }
   };
 
-  const handleSaveLinks = () => {
-    localStorage.setItem("linkedinUrl", linkedinUrl);
-    localStorage.setItem("githubUrl", githubUrl);
+  const handleSaveLinks = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Save LinkedIn URL
+        const { data: existingLinkedin } = await supabase
+          .from('portfolio_content')
+          .select('id')
+          .eq('content_key', 'linkedin_url')
+          .maybeSingle();
+
+        if (existingLinkedin) {
+          await supabase
+            .from('portfolio_content')
+            .update({ content_value: linkedinUrl })
+            .eq('content_key', 'linkedin_url');
+        } else {
+          await supabase
+            .from('portfolio_content')
+            .insert({ owner_id: user.id, content_key: 'linkedin_url', content_value: linkedinUrl });
+        }
+
+        // Save GitHub URL
+        const { data: existingGithub } = await supabase
+          .from('portfolio_content')
+          .select('id')
+          .eq('content_key', 'github_url')
+          .maybeSingle();
+
+        if (existingGithub) {
+          await supabase
+            .from('portfolio_content')
+            .update({ content_value: githubUrl })
+            .eq('content_key', 'github_url');
+        } else {
+          await supabase
+            .from('portfolio_content')
+            .insert({ owner_id: user.id, content_key: 'github_url', content_value: githubUrl });
+        }
+
+        toast.success('Links saved successfully');
+      } else {
+        localStorage.setItem("linkedinUrl", linkedinUrl);
+        localStorage.setItem("githubUrl", githubUrl);
+        toast.success('Links saved locally');
+      }
+    } catch (error) {
+      console.error('Error saving links:', error);
+      localStorage.setItem("linkedinUrl", linkedinUrl);
+      localStorage.setItem("githubUrl", githubUrl);
+      toast.error('Failed to save to database');
+    }
+    
     setIsEditingLinks(false);
   };
 
