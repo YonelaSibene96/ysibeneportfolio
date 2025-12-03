@@ -3,6 +3,7 @@ import { Edit2, Save, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const AboutSection = () => {
   const defaultAbout = "Experienced sales administrator with 6+ years in the IT and Telecommunications industry, proficient in customer service and sales support. I am a young professional with a strong foundation in Information Systems, E-logistics as well as Data Analytics with a current goal and great interest to become a junior business analyst.";
@@ -12,10 +13,34 @@ export const AboutSection = () => {
   const [aboutImage, setAboutImage] = useState<string>("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("aboutText");
-    if (saved) setAboutText(saved);
+    loadAboutContent();
     loadAboutImage();
   }, []);
+
+  const loadAboutContent = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('portfolio_content')
+        .select('content_value')
+        .eq('content_key', 'about_text')
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data?.content_value) {
+        setAboutText(data.content_value);
+      } else {
+        // Fallback to localStorage for migration
+        const saved = localStorage.getItem("aboutText");
+        if (saved) setAboutText(saved);
+      }
+    } catch (error) {
+      console.error('Error loading about content:', error);
+      // Fallback to localStorage
+      const saved = localStorage.getItem("aboutText");
+      if (saved) setAboutText(saved);
+    }
+  };
 
   const loadAboutImage = async () => {
     const { data } = await supabase.storage
@@ -41,6 +66,9 @@ export const AboutSection = () => {
 
       if (!error) {
         loadAboutImage();
+        toast.success('Image uploaded successfully');
+      } else {
+        toast.error('Failed to upload image');
       }
     }
   };
@@ -53,12 +81,53 @@ export const AboutSection = () => {
           .from('profile-images')
           .remove([`about/${fileName}`]);
         setAboutImage("");
+        toast.success('Image removed');
       }
     }
   };
 
-  const handleSave = () => {
-    localStorage.setItem("aboutText", aboutText);
+  const handleSave = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Try to update existing record first
+        const { data: existing } = await supabase
+          .from('portfolio_content')
+          .select('id')
+          .eq('content_key', 'about_text')
+          .maybeSingle();
+
+        if (existing) {
+          const { error } = await supabase
+            .from('portfolio_content')
+            .update({ content_value: aboutText })
+            .eq('content_key', 'about_text');
+          
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('portfolio_content')
+            .insert({
+              owner_id: user.id,
+              content_key: 'about_text',
+              content_value: aboutText
+            });
+          
+          if (error) throw error;
+        }
+        toast.success('About section saved');
+      } else {
+        // Fallback to localStorage if not logged in
+        localStorage.setItem("aboutText", aboutText);
+        toast.success('Saved locally');
+      }
+    } catch (error) {
+      console.error('Error saving about content:', error);
+      localStorage.setItem("aboutText", aboutText);
+      toast.error('Failed to save to database, saved locally');
+    }
+    
     setIsEditing(false);
   };
 
