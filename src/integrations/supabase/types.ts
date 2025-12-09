@@ -53,7 +53,7 @@ export type Database = {
           content_value: string
           created_at: string | null
           id: string
-          owner_id: string | null
+          owner_id: string
           updated_at: string | null
         }
         Insert: {
@@ -61,7 +61,7 @@ export type Database = {
           content_value: string
           created_at?: string | null
           id?: string
-          owner_id?: string | null
+          owner_id: string
           updated_at?: string | null
         }
         Update: {
@@ -69,7 +69,7 @@ export type Database = {
           content_value?: string
           created_at?: string | null
           id?: string
-          owner_id?: string | null
+          owner_id?: string
           updated_at?: string | null
         }
         Relationships: []
