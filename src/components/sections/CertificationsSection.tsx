@@ -338,16 +338,32 @@ export const CertificationsSection = () => {
                           <Button
                             variant="outline"
                             size="icon"
-                            asChild
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(cert.document_url!);
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `${cert.name.replace(/\s+/g, '-')}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+                              } catch (error) {
+                                // Fallback: open in new tab
+                                window.open(cert.document_url, '_blank');
+                              }
+                            }}
+                            title="View Certificate"
                           >
-                            <a href={cert.document_url} target="_blank" rel="noopener noreferrer">
-                              <FileText className="h-4 w-4" />
-                            </a>
+                            <FileText className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="icon"
                             onClick={() => removeDocument(cert.id!, cert.document_url)}
+                            title="Remove Certificate"
                           >
                             <X className="h-4 w-4" />
                           </Button>

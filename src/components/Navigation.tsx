@@ -1,10 +1,12 @@
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface NavigationProps {
   activeSection: string;
   onNavigate: (section: string) => void;
+  isLoggedIn?: boolean;
 }
 
 const menuItems = [
@@ -18,8 +20,9 @@ const menuItems = [
   { id: "contact", label: "Contact Me" },
 ];
 
-export const Navigation = ({ activeSection, onNavigate }: NavigationProps) => {
+export const Navigation = ({ activeSection, onNavigate, isLoggedIn = false }: NavigationProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border shadow-sm">
@@ -34,6 +37,17 @@ export const Navigation = ({ activeSection, onNavigate }: NavigationProps) => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-1">
+            {!isLoggedIn && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/auth")}
+                className="mr-2 text-foreground border-accent hover:bg-accent hover:text-accent-foreground"
+              >
+                <LogIn className="h-4 w-4 mr-1" />
+                Admin Login
+              </Button>
+            )}
             {menuItems.map((item) => (
               <Button
                 key={item.id}
@@ -62,6 +76,19 @@ export const Navigation = ({ activeSection, onNavigate }: NavigationProps) => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-2">
+            {!isLoggedIn && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  navigate("/auth");
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full justify-start mb-2"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                Admin Login
+              </Button>
+            )}
             {menuItems.map((item) => (
               <Button
                 key={item.id}
