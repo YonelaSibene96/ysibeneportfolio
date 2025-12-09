@@ -103,7 +103,7 @@ const Index = () => {
 
   return (
     <div className="relative">
-      <Navigation activeSection={activeSection} onNavigate={navigateToSection} />
+      <Navigation activeSection={activeSection} onNavigate={navigateToSection} isLoggedIn={!!user} />
       <ArrowNavigation onNavigate={handleArrowNavigation} />
       <PortfolioChatbot />
       
@@ -121,16 +121,6 @@ const Index = () => {
         </div>
       )}
 
-      {!user && (
-        <div className="fixed top-4 right-4 z-50">
-          <Button
-            onClick={() => navigate("/auth")}
-            className="rounded-full shadow-lg"
-          >
-            Admin Login
-          </Button>
-        </div>
-      )}
 
       <HeroSection />
       <AboutSection />
