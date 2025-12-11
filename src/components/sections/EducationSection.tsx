@@ -1,8 +1,9 @@
-import { GraduationCap, Upload, X, FileText } from "lucide-react";
+import { GraduationCap, Upload, X, FileText, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Education {
   institution: string;
@@ -11,7 +12,11 @@ interface Education {
   document?: string;
 }
 
-export const EducationSection = () => {
+interface EducationSectionProps {
+  isOwner?: boolean;
+}
+
+export const EducationSection = ({ isOwner = false }: EducationSectionProps) => {
   const defaultEducation: Education[] = [
     {
       institution: "International Institute of Business Analysis",
@@ -42,58 +47,162 @@ export const EducationSection = () => {
   }, []);
 
   const loadEducation = async () => {
-    const saved = localStorage.getItem("education");
-    if (saved) {
-      const eduData = JSON.parse(saved);
+    try {
+      // Try to load from Supabase first
+      const { data, error } = await supabase
+        .from('portfolio_content')
+        .select('content_value')
+        .eq('content_key', 'education')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data?.content_value) {
+        const eduData = JSON.parse(data.content_value);
+        
+        // Resolve document URLs
+        const updatedEdu = await Promise.all(
+          eduData.map(async (edu: Education) => {
+            if (edu.document && !edu.document.startsWith('http')) {
+              const { data: { publicUrl } } = supabase.storage
+                .from('documents')
+                .getPublicUrl(edu.document);
+              return { ...edu, document: publicUrl };
+            }
+            return edu;
+          })
+        );
+        
+        setEducation(updatedEdu);
+      } else {
+        // Fallback to localStorage for migration
+        const saved = localStorage.getItem("education");
+        if (saved) {
+          const eduData = JSON.parse(saved);
+          
+          const updatedEdu = await Promise.all(
+            eduData.map(async (edu: Education) => {
+              if (edu.document && edu.document.startsWith('documents/')) {
+                const { data: { publicUrl } } = supabase.storage
+                  .from('documents')
+                  .getPublicUrl(edu.document);
+                return { ...edu, document: publicUrl };
+              }
+              return edu;
+            })
+          );
+          
+          setEducation(updatedEdu);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading education:', error);
+    }
+  };
+
+  const saveEducation = async (newEducation: Education[]) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
       
-      const updatedEdu = await Promise.all(
-        eduData.map(async (edu: Education) => {
-          if (edu.document && edu.document.startsWith('documents/')) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('documents')
-              .getPublicUrl(edu.document);
-            return { ...edu, document: publicUrl };
-          }
-          return edu;
-        })
-      );
-      
-      setEducation(updatedEdu);
+      if (user) {
+        // Store file paths, not full URLs
+        const eduToSave = newEducation.map(edu => ({
+          ...edu,
+          document: edu.document?.includes('/documents/') 
+            ? edu.document.split('/documents/')[1]?.split('?')[0]
+            : edu.document
+        }));
+
+        const { data: existing } = await supabase
+          .from('portfolio_content')
+          .select('id')
+          .eq('content_key', 'education')
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from('portfolio_content')
+            .update({ content_value: JSON.stringify(eduToSave) })
+            .eq('content_key', 'education');
+        } else {
+          await supabase
+            .from('portfolio_content')
+            .insert({
+              owner_id: user.id,
+              content_key: 'education',
+              content_value: JSON.stringify(eduToSave)
+            });
+        }
+      }
+    } catch (error) {
+      console.error('Error saving education:', error);
     }
   };
 
   const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    if (!isOwner) return;
     const file = e.target.files?.[0];
     if (file) {
-      const fileName = `documents/edu-${index}-${Date.now()}.${file.name.split('.').pop()}`;
+      const fileName = `edu/edu-${index}-${Date.now()}.${file.name.split('.').pop()}`;
       
       const { error } = await supabase.storage
         .from('documents')
         .upload(fileName, file, { upsert: true });
 
       if (!error) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('documents')
+          .getPublicUrl(fileName);
+
         const newEducation = [...education];
-        newEducation[index].document = fileName;
+        newEducation[index].document = publicUrl;
         setEducation(newEducation);
-        localStorage.setItem("education", JSON.stringify(newEducation));
-        loadEducation();
+        await saveEducation(newEducation);
+        toast.success('Document uploaded successfully');
+      } else {
+        toast.error('Failed to upload document');
       }
     }
   };
 
   const removeDocument = async (index: number) => {
+    if (!isOwner) return;
     const newEducation = [...education];
-    const docPath = newEducation[index].document;
+    const docUrl = newEducation[index].document;
     
-    if (docPath && docPath.startsWith('documents/')) {
-      await supabase.storage
-        .from('documents')
-        .remove([docPath]);
+    if (docUrl) {
+      // Extract file path from URL
+      const urlParts = docUrl.split('/documents/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1].split('?')[0];
+        await supabase.storage
+          .from('documents')
+          .remove([filePath]);
+      }
     }
     
     delete newEducation[index].document;
     setEducation(newEducation);
-    localStorage.setItem("education", JSON.stringify(newEducation));
+    await saveEducation(newEducation);
+    toast.success('Document removed');
+  };
+
+  const downloadDocument = async (documentUrl: string, eduName: string) => {
+    try {
+      const response = await fetch(documentUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${eduName.replace(/\s+/g, '-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      // Fallback: open in new tab
+      window.open(documentUrl, '_blank');
+    }
   };
 
   return (
@@ -122,21 +231,23 @@ export const EducationSection = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          asChild
+                          onClick={() => downloadDocument(edu.document!, edu.institution)}
+                          title="Download Document"
                         >
-                          <a href={edu.document} target="_blank" rel="noopener noreferrer">
-                            <FileText className="h-4 w-4" />
-                          </a>
+                          <Download className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeDocument(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        {isOwner && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => removeDocument(index)}
+                            title="Remove Document"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
                       </>
-                    ) : (
+                    ) : isOwner ? (
                       <label>
                         <Button variant="outline" size="icon" asChild>
                           <span>
@@ -150,7 +261,7 @@ export const EducationSection = () => {
                           className="hidden"
                         />
                       </label>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </Card>

@@ -14,7 +14,11 @@ interface Project {
   link?: string;
 }
 
-export const ProjectsSection = () => {
+interface ProjectsSectionProps {
+  isOwner?: boolean;
+}
+
+export const ProjectsSection = ({ isOwner = false }: ProjectsSectionProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newProject, setNewProject] = useState({
@@ -47,6 +51,7 @@ export const ProjectsSection = () => {
   };
 
   const handleAdd = async () => {
+    if (!isOwner) return;
     if (newProject.name && newProject.description) {
       const updated = [...projects, newProject];
       try {
@@ -81,6 +86,7 @@ export const ProjectsSection = () => {
   };
 
   const handleRemove = async (index: number) => {
+    if (!isOwner) return;
     const updated = projects.filter((_, i) => i !== index);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -119,13 +125,15 @@ export const ProjectsSection = () => {
               <Folder className="h-10 w-10 text-accent" />
               Personal Projects
             </h2>
-            <Button onClick={() => setIsAdding(!isAdding)} variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Project
-            </Button>
+            {isOwner && (
+              <Button onClick={() => setIsAdding(!isAdding)} variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Project
+              </Button>
+            )}
           </div>
 
-          {isAdding && (
+          {isAdding && isOwner && (
             <Card className="p-6 mb-8 border-accent">
               <div className="space-y-4">
                 <Input
@@ -156,7 +164,7 @@ export const ProjectsSection = () => {
           {projects.length === 0 ? (
             <Card className="p-12 text-center border-dashed">
               <Folder className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No projects added yet. Click "Add Project" to get started!</p>
+              <p className="text-muted-foreground">No projects added yet.</p>
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 gap-6">
@@ -164,12 +172,14 @@ export const ProjectsSection = () => {
                 <Card key={index} className="p-6 hover:shadow-lg transition-shadow border-border group">
                   <div className="flex items-start justify-between mb-4">
                     <h3 className="text-xl font-semibold text-foreground">{project.name}</h3>
-                    <button
-                      onClick={() => handleRemove(index)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-5 w-5 text-destructive" />
-                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={() => handleRemove(index)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-5 w-5 text-destructive" />
+                      </button>
+                    )}
                   </div>
                   <p className="text-muted-foreground mb-4">{project.description}</p>
                   {project.technologies && (

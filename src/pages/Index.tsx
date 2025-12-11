@@ -20,12 +20,18 @@ import { useToast } from "@/hooks/use-toast";
 
 const sections = ["home", "about", "education", "certifications", "skills", "experience", "projects", "contact"];
 
+// Owner's user ID - only this user can edit the portfolio
+const OWNER_ID = "36ca3d56-ae25-4db9-be1e-400563633555";
+
 const Index = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check if current user is the owner
+  const isOwner = user?.id === OWNER_ID;
 
   useEffect(() => {
     // Set up auth state listener
@@ -97,19 +103,19 @@ const Index = () => {
         title: "Logged out",
         description: "You've been successfully logged out.",
       });
-      navigate("/auth");
+      navigate("/");
     }
   };
 
   return (
     <div className="relative">
-      <Navigation activeSection={activeSection} onNavigate={navigateToSection} isLoggedIn={!!user} />
+      <Navigation activeSection={activeSection} onNavigate={navigateToSection} />
       <ArrowNavigation onNavigate={handleArrowNavigation} />
       <PortfolioChatbot />
       
-      {user && (
+      {isOwner && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
-          <span className="text-sm text-gray-600">{user.email}</span>
+          <span className="text-sm text-gray-600">{user?.email}</span>
           <Button
             variant="ghost"
             size="sm"
@@ -121,15 +127,14 @@ const Index = () => {
         </div>
       )}
 
-
-      <HeroSection />
-      <AboutSection />
-      <EducationSection />
-      <CertificationsSection />
+      <HeroSection isOwner={isOwner} />
+      <AboutSection isOwner={isOwner} />
+      <EducationSection isOwner={isOwner} />
+      <CertificationsSection isOwner={isOwner} />
       <SkillsSection />
       <ExperienceSection />
-      <ProjectsSection />
-      <ContactSection />
+      <ProjectsSection isOwner={isOwner} />
+      <ContactSection isOwner={isOwner} />
       <Copyright />
     </div>
   );

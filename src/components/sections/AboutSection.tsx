@@ -5,7 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const AboutSection = () => {
+interface AboutSectionProps {
+  isOwner?: boolean;
+}
+
+export const AboutSection = ({ isOwner = false }: AboutSectionProps) => {
   const defaultAbout = "Experienced sales administrator with 6+ years in the IT and Telecommunications industry, proficient in customer service and sales support. I am a young professional with a strong foundation in Information Systems, E-logistics as well as Data Analytics with a current goal and great interest to become a junior business analyst.";
   
   const [isEditing, setIsEditing] = useState(false);
@@ -56,6 +60,7 @@ export const AboutSection = () => {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isOwner) return;
     const file = e.target.files?.[0];
     if (file) {
       const fileName = `about/about-${Date.now()}.${file.name.split('.').pop()}`;
@@ -74,6 +79,7 @@ export const AboutSection = () => {
   };
 
   const removeImage = async () => {
+    if (!isOwner) return;
     if (aboutImage) {
       const fileName = aboutImage.split('/').pop();
       if (fileName) {
@@ -87,6 +93,7 @@ export const AboutSection = () => {
   };
 
   const handleSave = async () => {
+    if (!isOwner) return;
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -117,15 +124,10 @@ export const AboutSection = () => {
           if (error) throw error;
         }
         toast.success('About section saved');
-      } else {
-        // Fallback to localStorage if not logged in
-        localStorage.setItem("aboutText", aboutText);
-        toast.success('Saved locally');
       }
     } catch (error) {
       console.error('Error saving about content:', error);
-      localStorage.setItem("aboutText", aboutText);
-      toast.error('Failed to save to database, saved locally');
+      toast.error('Failed to save');
     }
     
     setIsEditing(false);
@@ -137,18 +139,20 @@ export const AboutSection = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-4xl font-bold text-foreground">About Me</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-            >
-              {isEditing ? <Save className="h-5 w-5" /> : <Edit2 className="h-5 w-5" />}
-            </Button>
+            {isOwner && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+              >
+                {isEditing ? <Save className="h-5 w-5" /> : <Edit2 className="h-5 w-5" />}
+              </Button>
+            )}
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1">
-              {isEditing ? (
+              {isEditing && isOwner ? (
                 <Textarea
                   value={aboutText}
                   onChange={(e) => setAboutText(e.target.value)}
@@ -169,14 +173,16 @@ export const AboutSection = () => {
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
-                    <button
-                      onClick={removeImage}
-                      className="absolute top-4 right-4 bg-destructive text-destructive-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={removeImage}
+                        className="absolute top-4 right-4 bg-destructive text-destructive-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
                   </>
-                ) : (
+                ) : isOwner ? (
                   <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
                     <Upload className="h-12 w-12 text-muted-foreground mb-4" />
                     <span className="text-muted-foreground">Upload Profile Photo</span>
@@ -187,6 +193,10 @@ export const AboutSection = () => {
                       className="hidden"
                     />
                   </label>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-muted-foreground">No image</span>
+                  </div>
                 )}
               </div>
             </div>

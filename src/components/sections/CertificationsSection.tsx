@@ -1,4 +1,4 @@
-import { Award, Upload, X, FileText } from "lucide-react";
+import { Award, Upload, X, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,105 +14,33 @@ interface Certification {
   document_url?: string;
 }
 
+interface CertificationsSectionProps {
+  isOwner?: boolean;
+}
+
 const INITIAL_CERTIFICATIONS = [
-  {
-    name: "Entry Certificate in Business Analysis",
-    issuer: "International Institute of Business Analysis",
-    date: "In Progress",
-  },
-  {
-    name: "AI & Machine Learning For Everyone",
-    issuer: "CAPACITI",
-    date: "2025",
-  },
-  {
-    name: "AI FOR EVERYONE",
-    issuer: "CAPACITI",
-    date: "2025",
-  },
-  {
-    name: "Introduction to AI",
-    issuer: "Google (Coursera)",
-    date: "2025",
-  },
-  {
-    name: "AI For Everyone",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Introduction to Responsible AI",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Active Listening Enhancing Communication Skills",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Developing Interpersonal Skills",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Emotional Intelligence",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Financial Planning For Young Adults",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Finding Your Professional Voice",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Grit and Growth Mindset",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Introduction to Personal Branding",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Leading With Impact",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Preparation For Job Interviews",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Solving Problems With Creative & Critical Thinking",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Verbal Communications and Presentation Skills",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Work Smarter, Not Harder",
-    issuer: "Coursera",
-    date: "2025",
-  },
-  {
-    name: "Write Professional Emails in English",
-    issuer: "Coursera",
-    date: "2025",
-  },
+  { name: "Entry Certificate in Business Analysis", issuer: "International Institute of Business Analysis", date: "In Progress" },
+  { name: "AI & Machine Learning For Everyone", issuer: "CAPACITI", date: "2025" },
+  { name: "AI FOR EVERYONE", issuer: "CAPACITI", date: "2025" },
+  { name: "Introduction to AI", issuer: "Google (Coursera)", date: "2025" },
+  { name: "AI For Everyone", issuer: "Coursera", date: "2025" },
+  { name: "Introduction to Responsible AI", issuer: "Coursera", date: "2025" },
+  { name: "Active Listening Enhancing Communication Skills", issuer: "Coursera", date: "2025" },
+  { name: "Developing Interpersonal Skills", issuer: "Coursera", date: "2025" },
+  { name: "Emotional Intelligence", issuer: "Coursera", date: "2025" },
+  { name: "Financial Planning For Young Adults", issuer: "Coursera", date: "2025" },
+  { name: "Finding Your Professional Voice", issuer: "Coursera", date: "2025" },
+  { name: "Grit and Growth Mindset", issuer: "Coursera", date: "2025" },
+  { name: "Introduction to Personal Branding", issuer: "Coursera", date: "2025" },
+  { name: "Leading With Impact", issuer: "Coursera", date: "2025" },
+  { name: "Preparation For Job Interviews", issuer: "Coursera", date: "2025" },
+  { name: "Solving Problems With Creative & Critical Thinking", issuer: "Coursera", date: "2025" },
+  { name: "Verbal Communications and Presentation Skills", issuer: "Coursera", date: "2025" },
+  { name: "Work Smarter, Not Harder", issuer: "Coursera", date: "2025" },
+  { name: "Write Professional Emails in English", issuer: "Coursera", date: "2025" },
 ];
 
-export const CertificationsSection = () => {
+export const CertificationsSection = ({ isOwner = false }: CertificationsSectionProps) => {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newCert, setNewCert] = useState({ name: "", issuer: "", date: "2025" });
@@ -131,7 +59,6 @@ export const CertificationsSection = () => {
 
       if (error) throw error;
 
-      // If no certifications exist, migrate initial data
       if (!existingCerts || existingCerts.length === 0) {
         await migrateInitialCertifications();
         return;
@@ -159,7 +86,6 @@ export const CertificationsSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        // If no user, just show the certifications without saving
         setCertifications(INITIAL_CERTIFICATIONS);
         setIsLoading(false);
         return;
@@ -188,6 +114,7 @@ export const CertificationsSection = () => {
   };
 
   const handleAdd = async () => {
+    if (!isOwner) return;
     if (!newCert.name || !newCert.issuer) {
       toast.error('Please fill in all fields');
       return;
@@ -223,6 +150,7 @@ export const CertificationsSection = () => {
   };
 
   const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>, certId: string) => {
+    if (!isOwner) return;
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -255,10 +183,9 @@ export const CertificationsSection = () => {
   };
 
   const removeDocument = async (certId: string, documentUrl?: string) => {
-    if (!certId) return;
+    if (!isOwner || !certId) return;
 
     try {
-      // Extract the file path from the full URL
       if (documentUrl) {
         const urlParts = documentUrl.split('/object/public/documents/');
         if (urlParts.length > 1) {
@@ -269,7 +196,6 @@ export const CertificationsSection = () => {
         }
       }
 
-      // Update database
       const { error } = await supabase
         .from('certifications')
         .update({ document_url: null })
@@ -285,6 +211,23 @@ export const CertificationsSection = () => {
     }
   };
 
+  const downloadDocument = async (documentUrl: string, certName: string) => {
+    try {
+      const response = await fetch(documentUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${certName.replace(/\s+/g, '-')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      window.open(documentUrl, '_blank');
+    }
+  };
+
   return (
     <section id="certifications" className="min-h-screen flex items-center py-20 bg-gradient-to-b from-muted to-background">
       <div className="container mx-auto px-4">
@@ -294,12 +237,14 @@ export const CertificationsSection = () => {
               <Award className="h-10 w-10 text-accent" />
               Certifications
             </h2>
-            <Button onClick={() => setIsAdding(!isAdding)} variant="outline">
-              {isAdding ? "Cancel" : "Add New"}
-            </Button>
+            {isOwner && (
+              <Button onClick={() => setIsAdding(!isAdding)} variant="outline">
+                {isAdding ? "Cancel" : "Add New"}
+              </Button>
+            )}
           </div>
 
-          {isAdding && (
+          {isAdding && isOwner && (
             <Card className="p-6 mb-6 border-accent">
               <div className="space-y-4">
                 <Input
@@ -338,38 +283,24 @@ export const CertificationsSection = () => {
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={async () => {
-                              try {
-                                const response = await fetch(cert.document_url!);
-                                const blob = await response.blob();
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = `${cert.name.replace(/\s+/g, '-')}.pdf`;
-                                document.body.appendChild(a);
-                                a.click();
-                                window.URL.revokeObjectURL(url);
-                                document.body.removeChild(a);
-                              } catch (error) {
-                                // Fallback: open in new tab
-                                window.open(cert.document_url, '_blank');
-                              }
-                            }}
-                            title="View Certificate"
+                            onClick={() => downloadDocument(cert.document_url!, cert.name)}
+                            title="Download Certificate"
                           >
-                            <FileText className="h-4 w-4" />
+                            <Download className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => removeDocument(cert.id!, cert.document_url)}
-                            title="Remove Certificate"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          {isOwner && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => removeDocument(cert.id!, cert.document_url)}
+                              title="Remove Certificate"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
                         </>
                       ) : (
-                        cert.id && (
+                        isOwner && cert.id && (
                           <label>
                             <Button variant="outline" size="icon" asChild>
                               <span>
