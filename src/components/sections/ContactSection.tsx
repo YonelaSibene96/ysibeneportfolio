@@ -1,4 +1,4 @@
-import { Mail, Phone, Linkedin, Github, Upload, X, FileText, Edit } from "lucide-react";
+import { Mail, Phone, Linkedin, Github, Upload, X, FileText, Edit, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,7 +6,11 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const ContactSection = () => {
+interface ContactSectionProps {
+  isOwner?: boolean;
+}
+
+export const ContactSection = ({ isOwner = false }: ContactSectionProps) => {
   const [contactImage, setContactImage] = useState<string>("");
   const [cvDocument, setCvDocument] = useState<string>("");
   const [linkedinUrl, setLinkedinUrl] = useState<string>("https://www.linkedin.com/in/yonela-sibene");
@@ -35,11 +39,6 @@ export const ContactSection = () => {
       }
     } catch (error) {
       console.error('Error loading social links:', error);
-      // Fallback to localStorage
-      const savedLinkedin = localStorage.getItem("linkedinUrl");
-      const savedGithub = localStorage.getItem("githubUrl");
-      if (savedLinkedin) setLinkedinUrl(savedLinkedin);
-      if (savedGithub) setGithubUrl(savedGithub);
     }
   };
 
@@ -68,6 +67,7 @@ export const ContactSection = () => {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isOwner) return;
     const file = e.target.files?.[0];
     if (file) {
       const fileName = `contact-${Date.now()}.${file.name.split('.').pop()}`;
@@ -78,11 +78,13 @@ export const ContactSection = () => {
 
       if (!error) {
         loadContactFiles();
+        toast.success('Image uploaded');
       }
     }
   };
 
   const handleCVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isOwner) return;
     const file = e.target.files?.[0];
     if (file) {
       const fileName = `cv/cv-${Date.now()}.${file.name.split('.').pop()}`;
@@ -93,16 +95,17 @@ export const ContactSection = () => {
 
       if (!error) {
         loadContactFiles();
+        toast.success('CV uploaded');
       }
     }
   };
 
   const handleSaveLinks = async () => {
+    if (!isOwner) return;
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Save LinkedIn URL
         const { data: existingLinkedin } = await supabase
           .from('portfolio_content')
           .select('id')
@@ -120,7 +123,6 @@ export const ContactSection = () => {
             .insert({ owner_id: user.id, content_key: 'linkedin_url', content_value: linkedinUrl });
         }
 
-        // Save GitHub URL
         const { data: existingGithub } = await supabase
           .from('portfolio_content')
           .select('id')
@@ -139,46 +141,37 @@ export const ContactSection = () => {
         }
 
         toast.success('Links saved successfully');
-      } else {
-        localStorage.setItem("linkedinUrl", linkedinUrl);
-        localStorage.setItem("githubUrl", githubUrl);
-        toast.success('Links saved locally');
       }
     } catch (error) {
       console.error('Error saving links:', error);
-      localStorage.setItem("linkedinUrl", linkedinUrl);
-      localStorage.setItem("githubUrl", githubUrl);
-      toast.error('Failed to save to database');
+      toast.error('Failed to save links');
     }
     
     setIsEditingLinks(false);
   };
 
+  const downloadCV = async () => {
+    try {
+      const response = await fetch(cvDocument);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Yonela-Sibene-CV.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      window.open(cvDocument, '_blank');
+    }
+  };
+
   const contactInfo = [
-    {
-      icon: Phone,
-      label: "Phone",
-      value: "0649731961",
-      link: "tel:0649731961",
-    },
-    {
-      icon: Mail,
-      label: "Email",
-      value: "ysibene@gmail.com",
-      link: "mailto:ysibene@gmail.com",
-    },
-    {
-      icon: Linkedin,
-      label: "LinkedIn",
-      value: "View Profile",
-      link: linkedinUrl,
-    },
-    {
-      icon: Github,
-      label: "GitHub",
-      value: "View Profile",
-      link: githubUrl,
-    },
+    { icon: Phone, label: "Phone", value: "0649731961", link: "tel:0649731961" },
+    { icon: Mail, label: "Email", value: "ysibene@gmail.com", link: "mailto:ysibene@gmail.com" },
+    { icon: Linkedin, label: "LinkedIn", value: "View Profile", link: linkedinUrl },
+    { icon: Github, label: "GitHub", value: "View Profile", link: githubUrl },
   ];
 
   const quickLinks = [
@@ -202,17 +195,19 @@ export const ContactSection = () => {
                 I&apos;m always open to discussing new opportunities and collaborations
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditingLinks(!isEditingLinks)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              {isEditingLinks ? "Cancel" : "Edit Links"}
-            </Button>
+            {isOwner && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditingLinks(!isEditingLinks)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                {isEditingLinks ? "Cancel" : "Edit Links"}
+              </Button>
+            )}
           </div>
 
-          {isEditingLinks && (
+          {isEditingLinks && isOwner && (
             <Card className="p-6 mb-8 border-accent">
               <div className="space-y-4">
                 <div>
@@ -249,22 +244,25 @@ export const ContactSection = () => {
                       alt="Contact"
                       className="w-full h-full object-cover"
                     />
-                    <button
-                      onClick={async () => {
-                        const fileName = contactImage.split('/').pop();
-                        if (fileName) {
-                          await supabase.storage
-                            .from('contact-images')
-                            .remove([fileName]);
-                        }
-                        setContactImage("");
-                      }}
-                      className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={async () => {
+                          const fileName = contactImage.split('/').pop();
+                          if (fileName) {
+                            await supabase.storage
+                              .from('contact-images')
+                              .remove([fileName]);
+                          }
+                          setContactImage("");
+                          toast.success('Image removed');
+                        }}
+                        className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
                   </>
-                ) : (
+                ) : isOwner ? (
                   <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
                     <Upload className="h-12 w-12 text-muted-foreground mb-2" />
                     <span className="text-sm text-muted-foreground">Upload Photo</span>
@@ -275,6 +273,10 @@ export const ContactSection = () => {
                       className="hidden"
                     />
                   </label>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-muted-foreground">No image</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -308,52 +310,37 @@ export const ContactSection = () => {
                 <div>
                   <h3 className="font-semibold text-lg">Curriculum Vitae</h3>
                   <p className="text-sm text-muted-foreground">
-                    {cvDocument ? "CV uploaded" : "Upload your CV"}
+                    {cvDocument ? "CV uploaded" : "No CV uploaded"}
                   </p>
                 </div>
               </div>
               <div className="flex gap-2">
                 {cvDocument ? (
                   <>
-                    <Button
-                      variant="default"
-                      onClick={async () => {
-                        try {
-                          const response = await fetch(cvDocument);
-                          const blob = await response.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'CV.pdf';
-                          document.body.appendChild(a);
-                          a.click();
-                          window.URL.revokeObjectURL(url);
-                          document.body.removeChild(a);
-                        } catch (error) {
-                          // Fallback: open in new tab
-                          window.open(cvDocument, '_blank');
-                        }
-                      }}
-                    >
-                      View CV
+                    <Button variant="default" onClick={downloadCV}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download CV
                     </Button>
-                    <Button
-                      onClick={async () => {
-                        const fileName = cvDocument.split('/').pop();
-                        if (fileName) {
-                          await supabase.storage
-                            .from('documents')
-                            .remove([`cv/${fileName}`]);
-                        }
-                        setCvDocument("");
-                      }}
-                      variant="outline"
-                      size="icon"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    {isOwner && (
+                      <Button
+                        onClick={async () => {
+                          const fileName = cvDocument.split('/').pop();
+                          if (fileName) {
+                            await supabase.storage
+                              .from('documents')
+                              .remove([`cv/${fileName}`]);
+                          }
+                          setCvDocument("");
+                          toast.success('CV removed');
+                        }}
+                        variant="outline"
+                        size="icon"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </>
-                ) : (
+                ) : isOwner ? (
                   <label>
                     <Button asChild>
                       <span>
@@ -368,7 +355,7 @@ export const ContactSection = () => {
                       className="hidden"
                     />
                   </label>
-                )}
+                ) : null}
               </div>
             </div>
           </Card>
@@ -389,21 +376,13 @@ export const ContactSection = () => {
                   {link.label}
                 </Button>
               ))}
-              <Button
-                variant="outline"
-                asChild
-                className="justify-start"
-              >
+              <Button variant="outline" asChild className="justify-start">
                 <a href={linkedinUrl} target="_blank" rel="noopener noreferrer">
                   <Linkedin className="h-4 w-4 mr-2" />
                   LinkedIn
                 </a>
               </Button>
-              <Button
-                variant="outline"
-                asChild
-                className="justify-start"
-              >
+              <Button variant="outline" asChild className="justify-start">
                 <a href={githubUrl} target="_blank" rel="noopener noreferrer">
                   <Github className="h-4 w-4 mr-2" />
                   GitHub
