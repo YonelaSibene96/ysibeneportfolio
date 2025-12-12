@@ -167,15 +167,10 @@ export const ContactSection = ({ isOwner = false }: ContactSectionProps) => {
     }
   };
 
-  const viewCV = async () => {
-    try {
-      const response = await fetch(cvDocument);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    } catch (error) {
-      toast.error('Unable to view document. Try downloading instead.');
-    }
+  const viewCV = () => {
+    // Use Google Docs Viewer to bypass browser blocking
+    const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(cvDocument)}&embedded=false`;
+    window.open(googleViewerUrl, '_blank');
   };
 
   const contactInfo = [

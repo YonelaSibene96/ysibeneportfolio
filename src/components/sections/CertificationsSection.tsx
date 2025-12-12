@@ -228,15 +228,10 @@ export const CertificationsSection = ({ isOwner = false }: CertificationsSection
     }
   };
 
-  const viewDocument = async (documentUrl: string) => {
-    try {
-      const response = await fetch(documentUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    } catch (error) {
-      toast.error('Unable to view document. Try downloading instead.');
-    }
+  const viewDocument = (documentUrl: string) => {
+    // Use Google Docs Viewer to bypass browser blocking
+    const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl)}&embedded=false`;
+    window.open(googleViewerUrl, '_blank');
   };
 
   return (
