@@ -1,4 +1,4 @@
-import { Mail, Phone, Linkedin, Github, Upload, X, FileText, Edit, Download } from "lucide-react";
+import { Mail, Phone, Linkedin, Github, Upload, X, FileText, Edit, Download, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -167,6 +167,17 @@ export const ContactSection = ({ isOwner = false }: ContactSectionProps) => {
     }
   };
 
+  const viewCV = async () => {
+    try {
+      const response = await fetch(cvDocument);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error('Unable to view document. Try downloading instead.');
+    }
+  };
+
   const contactInfo = [
     { icon: Phone, label: "Phone", value: "0649731961", link: "tel:0649731961" },
     { icon: Mail, label: "Email", value: "ysibene@gmail.com", link: "mailto:ysibene@gmail.com" },
@@ -287,9 +298,15 @@ export const ContactSection = ({ isOwner = false }: ContactSectionProps) => {
                 <Card key={index} className="p-4 hover:shadow-lg transition-shadow border-border">
                   <a
                     href={info.link}
-                    target="_blank"
+                    target={info.label === "Phone" ? "_self" : "_blank"}
                     rel="noopener noreferrer"
                     className="flex items-center gap-4 text-foreground hover:text-accent transition-colors"
+                    onClick={(e) => {
+                      if (info.label === "LinkedIn" || info.label === "GitHub") {
+                        e.preventDefault();
+                        window.open(info.link, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
                   >
                     <info.icon className="h-6 w-6 flex-shrink-0" />
                     <div>
@@ -317,9 +334,13 @@ export const ContactSection = ({ isOwner = false }: ContactSectionProps) => {
               <div className="flex gap-2">
                 {cvDocument ? (
                   <>
+                    <Button variant="outline" onClick={viewCV}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View
+                    </Button>
                     <Button variant="default" onClick={downloadCV}>
                       <Download className="h-4 w-4 mr-2" />
-                      Download CV
+                      Download
                     </Button>
                     {isOwner && (
                       <Button

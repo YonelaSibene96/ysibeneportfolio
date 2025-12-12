@@ -132,7 +132,7 @@ const Index = () => {
       <EducationSection isOwner={isOwner} />
       <CertificationsSection isOwner={isOwner} />
       <SkillsSection />
-      <ExperienceSection />
+      <ExperienceSection isOwner={isOwner} />
       <ProjectsSection isOwner={isOwner} />
       <ContactSection isOwner={isOwner} />
       <Copyright />
