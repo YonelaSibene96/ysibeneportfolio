@@ -1,4 +1,4 @@
-import { Award, Upload, X, Download } from "lucide-react";
+import { Award, Upload, X, Download, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -224,7 +224,18 @@ export const CertificationsSection = ({ isOwner = false }: CertificationsSection
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      window.open(documentUrl, '_blank');
+      toast.error('Unable to download. Try viewing instead.');
+    }
+  };
+
+  const viewDocument = async (documentUrl: string) => {
+    try {
+      const response = await fetch(documentUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error('Unable to view document. Try downloading instead.');
     }
   };
 
@@ -280,6 +291,14 @@ export const CertificationsSection = ({ isOwner = false }: CertificationsSection
                     <div className="flex gap-2">
                       {cert.document_url ? (
                         <>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => viewDocument(cert.document_url!)}
+                            title="View Certificate"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="outline"
                             size="icon"
