@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-export const SkillsSection = () => {
+interface SkillsSectionProps {
+  isOwner?: boolean;
+}
+
+export const SkillsSection = ({ isOwner = false }: SkillsSectionProps) => {
   const defaultSkills = [
     "Data Analysis",
     "Customer Service",
@@ -53,13 +57,15 @@ export const SkillsSection = () => {
               <Sparkles className="h-10 w-10 text-accent" />
               Skills
             </h2>
-            <Button onClick={() => setIsAdding(!isAdding)} variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Skill
-            </Button>
+            {isOwner && (
+              <Button onClick={() => setIsAdding(!isAdding)} variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Skill
+              </Button>
+            )}
           </div>
 
-          {isAdding && (
+          {isOwner && isAdding && (
             <div className="mb-8 flex gap-2">
               <Input
                 placeholder="Enter a new skill"
@@ -79,12 +85,14 @@ export const SkillsSection = () => {
                 className="text-base py-2 px-4 hover:bg-accent transition-colors group"
               >
                 {skill}
-                <button
-                  onClick={() => handleRemove(index)}
-                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="h-3 w-3" />
-                </button>
+                {isOwner && (
+                  <button
+                    onClick={() => handleRemove(index)}
+                    className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
               </Badge>
             ))}
           </div>

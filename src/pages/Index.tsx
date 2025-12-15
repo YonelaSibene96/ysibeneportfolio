@@ -131,7 +131,7 @@ const Index = () => {
       <AboutSection isOwner={isOwner} />
       <EducationSection isOwner={isOwner} />
       <CertificationsSection isOwner={isOwner} />
-      <SkillsSection />
+      <SkillsSection isOwner={isOwner} />
       <ExperienceSection isOwner={isOwner} />
       <ProjectsSection isOwner={isOwner} />
       <ContactSection isOwner={isOwner} />
