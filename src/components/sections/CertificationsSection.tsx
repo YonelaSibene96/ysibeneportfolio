@@ -237,8 +237,8 @@ export const CertificationsSection = ({ isOwner = false }: CertificationsSection
   return (
     <section id="certifications" className="min-h-screen flex items-center py-20 bg-gradient-to-b from-muted to-background">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
             <h2 className="text-4xl font-bold text-foreground flex items-center gap-3">
               <Award className="h-10 w-10 text-accent" />
               Certifications
@@ -251,24 +251,27 @@ export const CertificationsSection = ({ isOwner = false }: CertificationsSection
           </div>
 
           {isAdding && isOwner && (
-            <Card className="p-6 mb-6 border-accent">
-              <div className="space-y-4">
+            <Card className="p-4 mb-6 border-accent">
+              <div className="flex gap-2 flex-wrap">
                 <Input
                   placeholder="Certification Name"
                   value={newCert.name}
                   onChange={(e) => setNewCert({ ...newCert, name: e.target.value })}
+                  className="flex-1 min-w-[200px]"
                 />
                 <Input
                   placeholder="Issuing Organization"
                   value={newCert.issuer}
                   onChange={(e) => setNewCert({ ...newCert, issuer: e.target.value })}
+                  className="flex-1 min-w-[200px]"
                 />
                 <Input
-                  placeholder="Date (e.g., 2025)"
+                  placeholder="Date"
                   value={newCert.date}
                   onChange={(e) => setNewCert({ ...newCert, date: e.target.value })}
+                  className="w-24"
                 />
-                <Button onClick={handleAdd} className="w-full">Add Certification</Button>
+                <Button onClick={handleAdd}>Add</Button>
               </div>
             </Card>
           )}
@@ -278,64 +281,66 @@ export const CertificationsSection = ({ isOwner = false }: CertificationsSection
               <p className="text-muted-foreground">Loading certifications...</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-10 gap-2">
               {certifications.map((cert) => (
-                <Card key={cert.id || cert.name} className="p-6 hover:shadow-lg transition-shadow border-border">
-                  <div className="flex items-start justify-between mb-4">
-                    <Award className="h-8 w-8 text-accent flex-shrink-0" />
-                    <div className="flex gap-2">
-                      {cert.document_url ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => viewDocument(cert.document_url!)}
-                            title="View Certificate"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => downloadDocument(cert.document_url!, cert.name)}
-                            title="Download Certificate"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          {isOwner && (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => removeDocument(cert.id!, cert.document_url)}
-                              title="Remove Certificate"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </>
-                      ) : (
-                        isOwner && cert.id && (
-                          <label>
-                            <Button variant="outline" size="icon" asChild>
-                              <span>
-                                <Upload className="h-4 w-4" />
-                              </span>
-                            </Button>
-                            <input
-                              type="file"
-                              accept=".pdf,image/*"
-                              onChange={(e) => handleDocumentUpload(e, cert.id!)}
-                              className="hidden"
-                            />
-                          </label>
-                        )
-                      )}
-                    </div>
+                <div 
+                  key={cert.id || cert.name} 
+                  className="group relative bg-card border border-border rounded-md p-2 hover:shadow-md transition-all hover:border-accent"
+                >
+                  <div className="flex items-start gap-1 mb-1">
+                    <Award className="h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
+                    <h3 className="font-medium text-xs text-foreground line-clamp-2 leading-tight">
+                      {cert.name}
+                    </h3>
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-2">{cert.name}</h3>
-                  <p className="text-muted-foreground text-sm mb-1">{cert.issuer}</p>
-                  <p className="text-accent text-sm font-medium">{cert.date}</p>
-                </Card>
+                  <p className="text-muted-foreground text-[10px] line-clamp-1 mb-0.5">{cert.issuer}</p>
+                  <p className="text-accent text-[10px] font-medium">{cert.date}</p>
+                  
+                  {/* Action buttons - appear on hover */}
+                  <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {cert.document_url ? (
+                      <>
+                        <button
+                          onClick={() => viewDocument(cert.document_url!)}
+                          className="p-1 bg-background/80 rounded hover:bg-accent/20"
+                          title="View"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => downloadDocument(cert.document_url!, cert.name)}
+                          className="p-1 bg-background/80 rounded hover:bg-accent/20"
+                          title="Download"
+                        >
+                          <Download className="h-3 w-3" />
+                        </button>
+                        {isOwner && (
+                          <button
+                            onClick={() => removeDocument(cert.id!, cert.document_url)}
+                            className="p-1 bg-background/80 rounded hover:bg-destructive/20"
+                            title="Remove"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      isOwner && cert.id && (
+                        <label className="cursor-pointer">
+                          <span className="p-1 bg-background/80 rounded hover:bg-accent/20 block">
+                            <Upload className="h-3 w-3" />
+                          </span>
+                          <input
+                            type="file"
+                            accept=".pdf,image/*"
+                            onChange={(e) => handleDocumentUpload(e, cert.id!)}
+                            className="hidden"
+                          />
+                        </label>
+                      )
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           )}
