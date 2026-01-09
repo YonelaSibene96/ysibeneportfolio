@@ -4,9 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface SkillsSectionProps {
   isOwner?: boolean;
+}
+
+interface Skill {
+  id: string;
+  skill_name: string;
+  skill_type: "technical" | "soft";
 }
 
 const defaultTechnicalSkills = [
@@ -27,45 +35,94 @@ const defaultSoftSkills = [
 ];
 
 export const SkillsSection = ({ isOwner = false }: SkillsSectionProps) => {
-  const [technicalSkills, setTechnicalSkills] = useState<string[]>(defaultTechnicalSkills);
-  const [softSkills, setSoftSkills] = useState<string[]>(defaultSoftSkills);
+  const [technicalSkills, setTechnicalSkills] = useState<Skill[]>([]);
+  const [softSkills, setSoftSkills] = useState<Skill[]>([]);
   const [newSkill, setNewSkill] = useState("");
   const [skillType, setSkillType] = useState<"technical" | "soft">("technical");
   const [isAdding, setIsAdding] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const savedTechnical = localStorage.getItem("technicalSkills");
-    const savedSoft = localStorage.getItem("softSkills");
-    if (savedTechnical) setTechnicalSkills(JSON.parse(savedTechnical));
-    if (savedSoft) setSoftSkills(JSON.parse(savedSoft));
+    fetchSkills();
   }, []);
 
-  const handleAdd = () => {
-    if (newSkill.trim()) {
-      if (skillType === "technical") {
-        const updated = [...technicalSkills, newSkill.trim()];
-        setTechnicalSkills(updated);
-        localStorage.setItem("technicalSkills", JSON.stringify(updated));
-      } else {
-        const updated = [...softSkills, newSkill.trim()];
-        setSoftSkills(updated);
-        localStorage.setItem("softSkills", JSON.stringify(updated));
-      }
-      setNewSkill("");
-      setIsAdding(false);
+  const fetchSkills = async () => {
+    const { data, error } = await supabase
+      .from("skills")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching skills:", error);
+      // Fallback to defaults if no skills exist
+      setTechnicalSkills(defaultTechnicalSkills.map((name, i) => ({ id: `default-tech-${i}`, skill_name: name, skill_type: "technical" })));
+      setSoftSkills(defaultSoftSkills.map((name, i) => ({ id: `default-soft-${i}`, skill_name: name, skill_type: "soft" })));
+    } else if (data && data.length > 0) {
+      setTechnicalSkills(data.filter((s) => s.skill_type === "technical") as Skill[]);
+      setSoftSkills(data.filter((s) => s.skill_type === "soft") as Skill[]);
+    } else {
+      // No skills in DB, show defaults
+      setTechnicalSkills(defaultTechnicalSkills.map((name, i) => ({ id: `default-tech-${i}`, skill_name: name, skill_type: "technical" })));
+      setSoftSkills(defaultSoftSkills.map((name, i) => ({ id: `default-soft-${i}`, skill_name: name, skill_type: "soft" })));
     }
+    setLoading(false);
   };
 
-  const handleRemove = (type: "technical" | "soft", index: number) => {
-    if (type === "technical") {
-      const updated = technicalSkills.filter((_, i) => i !== index);
-      setTechnicalSkills(updated);
-      localStorage.setItem("technicalSkills", JSON.stringify(updated));
-    } else {
-      const updated = softSkills.filter((_, i) => i !== index);
-      setSoftSkills(updated);
-      localStorage.setItem("softSkills", JSON.stringify(updated));
+  const handleAdd = async () => {
+    if (!newSkill.trim()) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Error", description: "You must be logged in to add skills", variant: "destructive" });
+      return;
     }
+
+    const { data, error } = await supabase
+      .from("skills")
+      .insert({ skill_name: newSkill.trim(), skill_type: skillType, owner_id: user.id })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    if (skillType === "technical") {
+      setTechnicalSkills([...technicalSkills, data as Skill]);
+    } else {
+      setSoftSkills([...softSkills, data as Skill]);
+    }
+    setNewSkill("");
+    setIsAdding(false);
+    toast({ title: "Success", description: "Skill added successfully" });
+  };
+
+  const handleRemove = async (type: "technical" | "soft", skillId: string) => {
+    // Skip deletion for default skills (they're not in DB)
+    if (skillId.startsWith("default-")) {
+      if (type === "technical") {
+        setTechnicalSkills(technicalSkills.filter((s) => s.id !== skillId));
+      } else {
+        setSoftSkills(softSkills.filter((s) => s.id !== skillId));
+      }
+      return;
+    }
+
+    const { error } = await supabase.from("skills").delete().eq("id", skillId);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    if (type === "technical") {
+      setTechnicalSkills(technicalSkills.filter((s) => s.id !== skillId));
+    } else {
+      setSoftSkills(softSkills.filter((s) => s.id !== skillId));
+    }
+    toast({ title: "Success", description: "Skill removed" });
   };
 
   return (
@@ -115,16 +172,16 @@ export const SkillsSection = ({ isOwner = false }: SkillsSectionProps) => {
                 Technical Skills
               </h3>
               <div className="flex flex-wrap gap-3">
-                {technicalSkills.map((skill, index) => (
+                {technicalSkills.map((skill) => (
                   <Badge
-                    key={index}
+                    key={skill.id}
                     variant="secondary"
                     className="text-base py-2 px-4 hover:bg-accent transition-colors group"
                   >
-                    {skill}
+                    {skill.skill_name}
                     {isOwner && (
                       <button
-                        onClick={() => handleRemove("technical", index)}
+                        onClick={() => handleRemove("technical", skill.id)}
                         className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="h-3 w-3" />
@@ -142,16 +199,16 @@ export const SkillsSection = ({ isOwner = false }: SkillsSectionProps) => {
                 Soft Skills
               </h3>
               <div className="flex flex-wrap gap-3">
-                {softSkills.map((skill, index) => (
+                {softSkills.map((skill) => (
                   <Badge
-                    key={index}
+                    key={skill.id}
                     variant="secondary"
                     className="text-base py-2 px-4 hover:bg-accent transition-colors group"
                   >
-                    {skill}
+                    {skill.skill_name}
                     {isOwner && (
                       <button
-                        onClick={() => handleRemove("soft", index)}
+                        onClick={() => handleRemove("soft", skill.id)}
                         className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="h-3 w-3" />

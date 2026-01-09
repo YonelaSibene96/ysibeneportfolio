@@ -74,6 +74,30 @@ export type Database = {
         }
         Relationships: []
       }
+      skills: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          skill_name: string
+          skill_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          skill_name: string
+          skill_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          skill_name?: string
+          skill_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
