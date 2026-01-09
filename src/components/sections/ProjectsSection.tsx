@@ -59,11 +59,14 @@ export const ProjectsSection = ({ isOwner = false }: ProjectsSectionProps) => {
         
         const { error } = await supabase
           .from("portfolio_content")
-          .upsert({
-            content_key: "projects",
-            content_value: JSON.stringify(updated),
-            owner_id: user?.id,
-          });
+          .upsert(
+            {
+              content_key: "projects",
+              content_value: JSON.stringify(updated),
+              owner_id: user?.id,
+            },
+            { onConflict: "content_key" }
+          );
 
         if (error) throw error;
 
@@ -93,11 +96,14 @@ export const ProjectsSection = ({ isOwner = false }: ProjectsSectionProps) => {
       
       const { error } = await supabase
         .from("portfolio_content")
-        .upsert({
-          content_key: "projects",
-          content_value: JSON.stringify(updated),
-          owner_id: user?.id,
-        });
+        .upsert(
+          {
+            content_key: "projects",
+            content_value: JSON.stringify(updated),
+            owner_id: user?.id,
+          },
+          { onConflict: "content_key" }
+        );
 
       if (error) throw error;
 
