@@ -1,10 +1,44 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, FileText, Mail } from "lucide-react";
 import Copyright from "@/components/Copyright";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [cvUrl, setCvUrl] = useState<string>("");
+
+  useEffect(() => {
+    loadCV();
+  }, []);
+
+  const loadCV = async () => {
+    const { data: docs } = await supabase.storage
+      .from('documents')
+      .list('cv', { limit: 1 });
+
+    if (docs && docs.length > 0) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(`cv/${docs[0].name}`);
+      setCvUrl(publicUrl);
+    }
+  };
+
+  const viewCV = () => {
+    if (cvUrl) {
+      const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(cvUrl)}&embedded=false`;
+      window.open(googleViewerUrl, '_blank');
+    }
+  };
+
+  const scrollToContact = () => {
+    navigate("/portfolio");
+    setTimeout(() => {
+      document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -28,6 +62,32 @@ const Landing = () => {
           </Button>
         </div>
       </div>
+      
+      {/* Bottom buttons */}
+      <div className="pb-8 px-4">
+        <div className="max-w-md mx-auto flex gap-4 justify-center">
+          <Button 
+            onClick={viewCV} 
+            variant="outline"
+            size="lg"
+            className="flex-1"
+            disabled={!cvUrl}
+          >
+            <FileText className="mr-2 h-5 w-5" />
+            View My CV
+          </Button>
+          <Button 
+            onClick={scrollToContact} 
+            variant="outline"
+            size="lg"
+            className="flex-1"
+          >
+            <Mail className="mr-2 h-5 w-5" />
+            Contact Me
+          </Button>
+        </div>
+      </div>
+      
       <Copyright />
     </div>
   );

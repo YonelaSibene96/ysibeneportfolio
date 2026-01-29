@@ -1,4 +1,4 @@
-import { Mail, Phone, Linkedin, Github, Upload, X, FileText, Edit, Download, Eye } from "lucide-react";
+import { Mail, Linkedin, Github, Upload, X, FileText, Edit, Download, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -174,7 +174,6 @@ export const ContactSection = ({ isOwner = false }: ContactSectionProps) => {
   };
 
   const contactInfo = [
-    { icon: Phone, label: "Phone", value: "0649731961", link: "tel:0649731961" },
     { icon: Mail, label: "Email", value: "ysibene@gmail.com", link: "mailto:ysibene@gmail.com" },
     { icon: Linkedin, label: "LinkedIn", value: "View Profile", link: linkedinUrl },
     { icon: Github, label: "GitHub", value: "View Profile", link: githubUrl },
