@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, FileText, Mail } from "lucide-react";
+import { ArrowRight, FileText } from "lucide-react";
 import Copyright from "@/components/Copyright";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,12 +33,6 @@ const Landing = () => {
     }
   };
 
-  const scrollToContact = () => {
-    navigate("/portfolio");
-    setTimeout(() => {
-      document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -63,27 +57,17 @@ const Landing = () => {
         </div>
       </div>
       
-      {/* Bottom buttons */}
+      {/* Bottom button */}
       <div className="pb-8 px-4">
-        <div className="max-w-md mx-auto flex gap-4 justify-center">
+        <div className="max-w-md mx-auto flex justify-center">
           <Button 
             onClick={viewCV} 
             variant="outline"
             size="lg"
-            className="flex-1"
             disabled={!cvUrl}
           >
             <FileText className="mr-2 h-5 w-5" />
             View My CV
-          </Button>
-          <Button 
-            onClick={scrollToContact} 
-            variant="outline"
-            size="lg"
-            className="flex-1"
-          >
-            <Mail className="mr-2 h-5 w-5" />
-            Contact Me
           </Button>
         </div>
       </div>
