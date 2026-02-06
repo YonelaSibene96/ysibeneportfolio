@@ -28,8 +28,8 @@ const Landing = () => {
 
   const viewCV = () => {
     if (cvUrl) {
-      const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(cvUrl)}&embedded=false`;
-      window.open(googleViewerUrl, '_blank');
+      // Open PDF directly - most modern browsers handle PDF viewing natively
+      window.open(cvUrl, '_blank');
     }
   };
 
