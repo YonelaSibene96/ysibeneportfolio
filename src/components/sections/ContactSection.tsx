@@ -168,9 +168,10 @@ export const ContactSection = ({ isOwner = false }: ContactSectionProps) => {
   };
 
   const viewCV = () => {
-    // Use Google Docs Viewer to bypass browser blocking
-    const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(cvDocument)}&embedded=false`;
-    window.open(googleViewerUrl, '_blank');
+    if (cvDocument) {
+      // Open PDF directly - most modern browsers handle PDF viewing natively
+      window.open(cvDocument, '_blank');
+    }
   };
 
   const contactInfo = [
