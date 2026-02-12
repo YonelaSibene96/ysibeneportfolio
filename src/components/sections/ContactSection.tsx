@@ -169,8 +169,13 @@ export const ContactSection = ({ isOwner = false }: ContactSectionProps) => {
 
   const viewCV = () => {
     if (cvDocument) {
-      // Open PDF directly - most modern browsers handle PDF viewing natively
-      window.open(cvDocument, '_blank');
+      const a = document.createElement('a');
+      a.href = cvDocument;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
