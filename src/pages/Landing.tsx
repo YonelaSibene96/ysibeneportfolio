@@ -28,8 +28,13 @@ const Landing = () => {
 
   const viewCV = () => {
     if (cvUrl) {
-      // Open PDF directly - most modern browsers handle PDF viewing natively
-      window.open(cvUrl, '_blank');
+      const a = document.createElement('a');
+      a.href = cvUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
