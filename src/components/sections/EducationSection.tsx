@@ -19,6 +19,11 @@ interface EducationSectionProps {
 export const EducationSection = ({ isOwner = false }: EducationSectionProps) => {
   const defaultEducation: Education[] = [
     {
+      institution: "University of the Western Cape",
+      degree: "Post Graduate Diploma in Business Administration",
+      period: "Present",
+    },
+    {
       institution: "International Institute of Business Analysis",
       degree: "Entry Certificate in Business Analysis",
       period: "Present",
