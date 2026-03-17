@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+const OWNER_ID = "36ca3d56-ae25-4db9-be1e-400563633555";
+
 interface SkillsSectionProps {
   isOwner?: boolean;
 }
