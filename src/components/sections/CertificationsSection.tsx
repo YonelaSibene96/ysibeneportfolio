@@ -19,7 +19,7 @@ interface CertificationsSectionProps {
 }
 
 const INITIAL_CERTIFICATIONS = [
-  { name: "Entry Certificate in Business Analysis (ECBA)", issuer: "International Institute of Business Analysis", date: "2025" },
+  { name: "Entry Certificate in Business Analysis (ECBA)", issuer: "International Institute of Business Analysis", date: "2026" },
   { name: "AI & Machine Learning For Everyone", issuer: "CAPACITI", date: "2025" },
   { name: "AI FOR EVERYONE", issuer: "CAPACITI", date: "2025" },
   { name: "Introduction to AI", issuer: "Google (Coursera)", date: "2025" },
