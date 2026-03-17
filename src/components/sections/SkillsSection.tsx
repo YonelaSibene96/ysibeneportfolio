@@ -53,6 +53,7 @@ export const SkillsSection = ({ isOwner = false }: SkillsSectionProps) => {
     const { data, error } = await supabase
       .from("skills")
       .select("*")
+      .eq("owner_id", OWNER_ID)
       .order("created_at", { ascending: true });
 
     if (error) {
