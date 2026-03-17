@@ -52,9 +52,11 @@ export const CertificationsSection = ({ isOwner = false }: CertificationsSection
 
   const loadCertifications = async () => {
     try {
+      const OWNER_ID = "36ca3d56-ae25-4db9-be1e-400563633555";
       const { data: existingCerts, error } = await supabase
         .from('certifications')
         .select('*')
+        .eq('owner_id', OWNER_ID)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
