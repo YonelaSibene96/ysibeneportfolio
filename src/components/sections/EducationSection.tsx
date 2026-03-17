@@ -26,7 +26,7 @@ export const EducationSection = ({ isOwner = false }: EducationSectionProps) => 
     {
       institution: "International Institute of Business Analysis",
       degree: "Entry Certificate in Business Analysis",
-      period: "Present",
+      period: "Completed",
     },
     {
       institution: "University of the Western Cape",
