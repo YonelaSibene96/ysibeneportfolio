@@ -1,22 +1,77 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const allowedOrigins = [
+  'https://ysibeneportfolio.lovable.app',
+  'https://id-preview--bdfb2e60-5f3d-4311-9488-42fe358f21d5.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:8080',
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  };
+}
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    const { messages } = body;
+
+    // Input validation
+    if (!Array.isArray(messages)) {
+      return new Response(
+        JSON.stringify({ error: "Messages must be an array" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (messages.length === 0 || messages.length > 50) {
+      return new Response(
+        JSON.stringify({ error: "Messages array must contain 1-50 items" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    for (const msg of messages) {
+      if (!msg.role || !msg.content) {
+        return new Response(
+          JSON.stringify({ error: "Each message must have role and content" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (!['user', 'assistant'].includes(msg.role)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid message role" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (typeof msg.content !== 'string' || msg.content.length > 5000) {
+        return new Response(
+          JSON.stringify({ error: "Message content must be a string under 5000 characters" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      console.error("LOVABLE_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "Service is not properly configured" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const systemPrompt = `You are a professional AI assistant for Yonela Sibene's portfolio website. You have comprehensive knowledge of her professional background, qualifications, and experience.
@@ -25,7 +80,7 @@ serve(async (req) => {
 Yonela is an experienced sales administrator with 6+ years in the IT and Telecommunications industry, proficient in customer service and sales support. She is a young professional with a strong foundation in Information Systems, E-logistics, and Data Analytics with a current goal and great interest to become a junior business analyst. She is a Data Driven Business Analyst and ECBA Candidate specializing in AI Solutions.
 
 ## EDUCATION
-1. **International Institute of Business Analysis** - Entry Certificate in Business Analysis (In Progress)
+1. **International Institute of Business Analysis** - Entry Certificate in Business Analysis (Completed)
 2. **University of the Western Cape** - Post Graduate Diploma in Computer Software & Media Applications: E-Logistics, Supply Chain Management & Data Science (Completed)
 3. **University of the Western Cape** - BCom General (Completed)
 4. **Leap Science and Math School** - Matric (Completed)
@@ -78,7 +133,7 @@ Yonela is an experienced sales administrator with 6+ years in the IT and Telecom
 - Built rapport and resolved complaints, achieving monthly call targets
 
 ## CERTIFICATIONS (2024)
-- Entry Certificate in Business Analysis (IIBA) - In Progress
+- Entry Certificate in Business Analysis (IIBA) - Completed
 - AI & Machine Learning For Everyone (CAPACITI)
 - AI For Everyone (CAPACITI & Coursera)
 - Introduction to AI (Google/Coursera)
@@ -141,10 +196,9 @@ Yonela is an experienced sales administrator with 6+ years in the IT and Telecom
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error:", response.status, await response.text());
       return new Response(
-        JSON.stringify({ error: "AI gateway error" }),
+        JSON.stringify({ error: "An internal error occurred. Please try again later." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -155,7 +209,7 @@ Yonela is an experienced sales administrator with 6+ years in the IT and Telecom
   } catch (error) {
     console.error("Chat error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "An internal error occurred. Please try again later." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
