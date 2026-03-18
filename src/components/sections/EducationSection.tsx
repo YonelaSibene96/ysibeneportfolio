@@ -16,6 +16,15 @@ interface EducationSectionProps {
   isOwner?: boolean;
 }
 
+const ECBA_DEGREE_TEXT = "Entry Certificate in Business Analysis";
+
+const normalizeEducationData = (items: Education[]): Education[] =>
+  items.map((edu) =>
+    edu.degree.toLowerCase().includes(ECBA_DEGREE_TEXT.toLowerCase())
+      ? { ...edu, period: "Completed" }
+      : edu
+  );
+
 export const EducationSection = ({ isOwner = false }: EducationSectionProps) => {
   const defaultEducation: Education[] = [
     {
@@ -45,7 +54,7 @@ export const EducationSection = ({ isOwner = false }: EducationSectionProps) => 
     },
   ];
 
-  const [education, setEducation] = useState<Education[]>(defaultEducation);
+  const [education, setEducation] = useState<Education[]>(normalizeEducationData(defaultEducation));
 
   useEffect(() => {
     loadEducation();
@@ -63,8 +72,8 @@ export const EducationSection = ({ isOwner = false }: EducationSectionProps) => 
       if (error) throw error;
 
       if (data?.content_value) {
-        const eduData = JSON.parse(data.content_value);
-        
+        const eduData = normalizeEducationData(JSON.parse(data.content_value));
+
         // Resolve document URLs
         const updatedEdu = await Promise.all(
           eduData.map(async (edu: Education) => {
@@ -77,14 +86,14 @@ export const EducationSection = ({ isOwner = false }: EducationSectionProps) => 
             return edu;
           })
         );
-        
+
         setEducation(updatedEdu);
       } else {
         // Fallback to localStorage for migration
         const saved = localStorage.getItem("education");
         if (saved) {
-          const eduData = JSON.parse(saved);
-          
+          const eduData = normalizeEducationData(JSON.parse(saved));
+
           const updatedEdu = await Promise.all(
             eduData.map(async (edu: Education) => {
               if (edu.document && edu.document.startsWith('documents/')) {
@@ -96,7 +105,7 @@ export const EducationSection = ({ isOwner = false }: EducationSectionProps) => 
               return edu;
             })
           );
-          
+
           setEducation(updatedEdu);
         }
       }
@@ -108,12 +117,14 @@ export const EducationSection = ({ isOwner = false }: EducationSectionProps) => 
   const saveEducation = async (newEducation: Education[]) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user) {
+        const normalizedEducation = normalizeEducationData(newEducation);
+
         // Store file paths, not full URLs
-        const eduToSave = newEducation.map(edu => ({
+        const eduToSave = normalizedEducation.map(edu => ({
           ...edu,
-          document: edu.document?.includes('/documents/') 
+          document: edu.document?.includes('/documents/')
             ? edu.document.split('/documents/')[1]?.split('?')[0]
             : edu.document
         }));
