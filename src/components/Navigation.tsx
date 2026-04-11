@@ -41,7 +41,7 @@ export const Navigation = ({ activeSection, onNavigate }: NavigationProps) => {
                 key={item.id}
                 variant="ghost"
                 onClick={() => onNavigate(item.id)}
-                className={`${
+                className={`text-xs px-2.5 ${
                   activeSection === item.id
                     ? "bg-accent text-accent-foreground"
                     : "text-foreground hover:bg-muted"
