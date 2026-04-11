@@ -11,6 +11,8 @@ import { CertificationsSection } from "@/components/sections/CertificationsSecti
 import { SkillsSection } from "@/components/sections/SkillsSection";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { ProjectsSection } from "@/components/sections/ProjectsSection";
+import { GallerySection } from "@/components/sections/GallerySection";
+import { ReflectionsSection } from "@/components/sections/ReflectionsSection";
 import { ContactSection } from "@/components/sections/ContactSection";
 import Copyright from "@/components/Copyright";
 import { Button } from "@/components/ui/button";
@@ -18,7 +20,7 @@ import { LogOut } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 
-const sections = ["home", "about", "education", "certifications", "skills", "experience", "projects", "contact"];
+const sections = ["home", "about", "education", "certifications", "skills", "experience", "projects", "gallery", "reflections", "contact"];
 
 // Owner's user ID - only this user can edit the portfolio
 const OWNER_ID = "36ca3d56-ae25-4db9-be1e-400563633555";
@@ -134,6 +136,8 @@ const Index = () => {
       <SkillsSection isOwner={isOwner} />
       <ExperienceSection isOwner={isOwner} />
       <ProjectsSection isOwner={isOwner} />
+      <GallerySection isOwner={isOwner} />
+      <ReflectionsSection isOwner={isOwner} />
       <ContactSection isOwner={isOwner} />
       <Copyright />
     </div>
