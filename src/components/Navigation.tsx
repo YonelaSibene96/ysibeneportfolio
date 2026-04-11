@@ -15,6 +15,8 @@ const menuItems = [
   { id: "skills", label: "Skills" },
   { id: "experience", label: "Experience" },
   { id: "projects", label: "Projects" },
+  { id: "gallery", label: "Gallery" },
+  { id: "reflections", label: "Reflections" },
   { id: "contact", label: "Contact" },
 ];
 

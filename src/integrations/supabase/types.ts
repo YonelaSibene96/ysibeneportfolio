@@ -47,6 +47,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          media_type: string
+          media_url: string
+          owner_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          media_type: string
+          media_url: string
+          owner_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          media_type?: string
+          media_url?: string
+          owner_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portfolio_content: {
         Row: {
           content_key: string
@@ -71,6 +104,36 @@ export type Database = {
           id?: string
           owner_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reflections: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          owner_id: string
+          reflection_number: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          reflection_number: number
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          reflection_number?: number
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
